@@ -2,7 +2,7 @@
 -- Matéria: 5SBD - Programação de Scripts de Banco de Dados
 -- Atividade: Atividade Prática 14: Packages no Oracle Database
 -- Ferramenta: Oracle APEX | Turno: Manhã | 2026.2
--- Aluna(a): Manuelle
+-- Aluna: Manuelle
 -- ==========================================================
 
 
