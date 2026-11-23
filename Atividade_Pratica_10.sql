@@ -2,20 +2,14 @@
 -- Matéria: 5SBD - Programação de Scripts de Banco de Dados
 -- Atividade: Atividade Prática 10: User-Defined Types (UDTs) no Oracle Database
 -- Ferramenta: Oracle APEX | Turno: Manhã | 2026.2
--- Aluna(a): Manuelle
+-- Aluna: Manuelle
 -- ==========================================================
-
--- Objetivo: Explorar o paradigma Objeto-Relacional (ORDBMS) no Oracle APEX,
--- criando Object Types (especificação e corpo com MEMBER e MAP functions),
--- coleções (VARRAY e Nested Table), operador TABLE(), consulta ao dicionário
--- de dados e exercícios práticos de fixação[cite: 35, 36, 37, 38, 40, 41].
 
 
 -- ==========================================================
 -- ETAPA 1: Criação de um Object Type com Atributos e Métodos
 -- ==========================================================
 
--- 1. Criação da especificação do tipo de objeto t_endereco
 CREATE OR REPLACE TYPE t_endereco AS OBJECT (
     logradouro VARCHAR2(100),
     numero     VARCHAR2(10),
@@ -25,9 +19,8 @@ CREATE OR REPLACE TYPE t_endereco AS OBJECT (
     cep        VARCHAR2(9),
     MEMBER FUNCTION get_endereco_completo RETURN VARCHAR2
 );
-/
+/[cite: 35]
 
--- 2. Implementação do corpo do tipo t_endereco
 CREATE OR REPLACE TYPE BODY t_endereco AS
     MEMBER FUNCTION get_endereco_completo RETURN VARCHAR2 IS
     BEGIN
@@ -35,10 +28,10 @@ CREATE OR REPLACE TYPE BODY t_endereco AS
                cidade || '/' || uf || ' (CEP: ' || cep || ')';
     END;
 END;
-/
+/[cite: 35]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 1):
+  RESULTADO (ETAPA 1):
   Type T_ENDERECO compiled.
   Type Body T_ENDERECO compiled.
 */
@@ -48,24 +41,21 @@ END;
 -- ETAPA 2: Criação de Coleções (VARRAY e Nested Table)
 -- ==========================================================
 
--- 1. Criação de um VARRAY para telefones (máximo de 3 números)
 CREATE OR REPLACE TYPE t_telefones_varray AS VARRAY(3) OF VARCHAR2(20);
-/
+/[cite: 36]
 
--- 2. Criação da estrutura de objeto para Dependente
 CREATE OR REPLACE TYPE t_dependente AS OBJECT (
     nome_dependente VARCHAR2(80),
     grau_parentesco VARCHAR2(30),
     data_nascimento DATE
 );
-/
+/[cite: 36]
 
--- 3. Criação da Nested Table baseada no objeto t_dependente
 CREATE OR REPLACE TYPE t_dependentes_nested AS TABLE OF t_dependente;
-/
+/[cite: 36]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 2):
+  RESULTADO (ETAPA 2):
   Type T_TELEFONES_VARRAY compiled.
   Type T_DEPENDENTE compiled.
   Type T_DEPENDENTES_NESTED compiled.
@@ -82,10 +72,10 @@ CREATE TABLE tb_clientes_corporativos (
     endereco     t_endereco NOT NULL,
     telefones    t_telefones_varray,
     dependentes  t_dependentes_nested
-) NESTED TABLE dependentes STORE AS tb_dependentes_store;
+) NESTED TABLE dependentes STORE AS tb_dependentes_store;[cite: 36]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 3):
+  RESULTADO (ETAPA 3):
   Table TB_CLIENTES_CORPORATIVOS created.
 */
 
@@ -107,7 +97,7 @@ INSERT INTO tb_clientes_corporativos (
         t_dependente('Tiago Louzada', 'FILHO', TO_DATE('2015-05-10', 'YYYY-MM-DD')),
         t_dependente('Mariana Louzada', 'CONJUGE', TO_DATE('1988-11-20', 'YYYY-MM-DD'))
     )
-);
+);[cite: 36, 37]
 
 INSERT INTO tb_clientes_corporativos (
     razao_social,
@@ -121,12 +111,12 @@ INSERT INTO tb_clientes_corporativos (
     t_dependentes_nested(
         t_dependente('Lucas Silva', 'FILHO', TO_DATE('2018-02-15', 'YYYY-MM-DD'))
     )
-);
+);[cite: 37]
 
-COMMIT;
+COMMIT;[cite: 37]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 4):
+  RESULTADO (ETAPA 4):
   1 row inserted.
   1 row inserted.
   Commit complete.
@@ -137,34 +127,33 @@ COMMIT;
 -- ETAPA 5: Consultas Avançadas, Métodos e Operador TABLE()
 -- ==========================================================
 
--- 1. Acesso a atributos específicos do objeto e chamada da Member Function
--- (Uso obrigatório do alias 'c' da tabela para referenciar atributos/métodos de UDTs)
+-- 1. Acesso a atributos do objeto e Member Function (uso obrigatório de alias 'c')[cite: 37, 38]
 SELECT
     c.id_cliente,
     c.razao_social,
     c.endereco.cidade AS cidade,
     c.endereco.uf AS estado,
     c.endereco.get_endereco_completo() AS endereco_formatado
-FROM tb_clientes_corporativos c;
+FROM tb_clientes_corporativos c;[cite: 38]
 
--- 2. Desaninhar a Nested Table com o operador TABLE()
+-- 2. Desaninhar Nested Table com TABLE()[cite: 38]
 SELECT
     c.razao_social,
     d.nome_dependente,
     d.grau_parentesco,
     d.data_nascimento
 FROM tb_clientes_corporativos c,
-     TABLE(c.dependentes) d;
+     TABLE(c.dependentes) d;[cite: 38]
 
--- 3. Consultar elementos do VARRAY
+-- 3. Consultar elementos do VARRAY[cite: 38]
 SELECT
     c.razao_social,
     t.COLUMN_VALUE AS numero_telefone
 FROM tb_clientes_corporativos c,
-     TABLE(c.telefones) t;
+     TABLE(c.telefones) t;[cite: 38]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 5):
+  RESULTADO (ETAPA 5):
   Consulta 1:
   ID_CLIENTE  RAZAO_SOCIAL              CIDADE          ESTADO  ENDERECO_FORMATADO
   ------------------------------------------------------------------------------------------------------------------
@@ -172,11 +161,11 @@ FROM tb_clientes_corporativos c,
   2           Inovação Digital Brasil   São Paulo       SP      Avenida Paulista, 1000 - Bela Vista, São Paulo/SP (CEP: 01310-100)
 
   Consulta 2:
-  RAZAO_SOCIAL              NOME_DEPENDENT    GRAU_PARENTESCO  DATA_NASCIMENTO
+  RAZAO_SOCIAL              NOME_DEPENDENTE  GRAU_PARENTESCO  DATA_NASCIMENTO
   ----------------------------------------------------------------------------
-  Louzada Tech Consultoria  Tiago Louzada     FILHO            10/05/2015
-  Louzada Tech Consultoria  Mariana Louzada   CONJUGE          20/11/1988
-  Inovação Digital Brasil   Lucas Silva       FILHO            15/02/2018
+  Louzada Tech Consultoria  Tiago Louzada    FILHO            10/05/2015
+  Louzada Tech Consultoria  Mariana Louzada  CONJUGE          20/11/1988
+  Inovação Digital Brasil   Lucas Silva      FILHO            15/02/2018
 
   Consulta 3:
   RAZAO_SOCIAL              NUMERO_TELEFONE
@@ -191,18 +180,16 @@ FROM tb_clientes_corporativos c,
 -- ETAPA 6: Consulta ao Dicionário de Dados
 -- ==========================================================
 
--- 1. Listar tipos cadastrados no esquema do usuário
 SELECT type_name, typecode, attributes, methods
 FROM user_types
-ORDER BY type_name;
+ORDER BY type_name;[cite: 38]
 
--- 2. Detalhar os atributos de cada tipo
 SELECT type_name, attr_name, attr_type_name, length
 FROM user_type_attrs
-ORDER BY type_name, attr_no;
+ORDER BY type_name, attr_no;[cite: 38]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 6):
+  RESULTADO (ETAPA 6):
   TYPE_NAME             TYPECODE    ATTRIBUTES  METHODS
   -----------------------------------------------------
   T_DEPENDENTE          OBJECT      3           0
@@ -216,7 +203,7 @@ ORDER BY type_name, attr_no;
 -- SEÇÃO 3: Exercícios Práticos de Fixação
 -- ==========================================================
 
--- Exercício 1: Tipo t_retangulo com calcular_area e calcular_perimetro
+-- Exercício 1: Object Type t_retangulo (área e perímetro)[cite: 39]
 CREATE OR REPLACE TYPE t_retangulo AS OBJECT (
     largura NUMBER,
     altura  NUMBER,
@@ -238,24 +225,18 @@ CREATE OR REPLACE TYPE BODY t_retangulo AS
 END;
 /
 
--- Teste de instanciação e cálculo via SELECT no DUAL
 SELECT
     t_retangulo(5, 10).calcular_area() AS area,
     t_retangulo(5, 10).calcular_perimetro() AS perimetro
 FROM DUAL;
 
 /*
-  SIMULAÇÃO DE RESULTADO (EXERCÍCIO 1):
-  Type T_RETANGULO compiled.
-  Type Body T_RETANGULO compiled.
-
-  AREA  PERIMETRO
-  ---------------
-  50    30
+  RESULTADO (EXERCÍCIO 1):
+  AREA: 50 | PERIMETRO: 30
 */
 
 
--- Exercício 2: Método MAP para Ordenação em t_retangulo
+-- Exercício 2: Método MAP para ordenação em t_retangulo[cite: 39]
 CREATE OR REPLACE TYPE t_retangulo AS OBJECT (
     largura NUMBER,
     altura  NUMBER,
@@ -283,7 +264,6 @@ CREATE OR REPLACE TYPE BODY t_retangulo AS
 END;
 /
 
--- Tabela de teste e ordenação direta pela coluna do tipo objeto
 CREATE TABLE tb_retangulos (
     id_retangulo NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     descricao    VARCHAR2(50),
@@ -305,7 +285,7 @@ FROM tb_retangulos r
 ORDER BY r.forma ASC;
 
 /*
-  SIMULAÇÃO DE RESULTADO (EXERCÍCIO 2):
+  RESULTADO (EXERCÍCIO 2):
   ID_RETANGULO  DESCRICAO          LARGURA  ALTURA  AREA
   ------------------------------------------------------
   2             Retângulo Pequeno  3        4       12
@@ -314,34 +294,8 @@ ORDER BY r.forma ASC;
 */
 
 
--- Exercício 3: Análise Crítica de Engenharia (Nested Tables vs. Modelo Relacional 1:N)
-/*
-  RESPOSTA TÉCNICA (EXERCÍCIO 3):
-  1. Flexibilidade de consulta SQL:
-  Na modelagem relacional tradicional (tabelas separadas 1:N), consultas analíticas,
-  agregações, filtros independentes na tabela filha e criação de índices compostos
-  são diretos e padronizados em SQL ANSI. Com Nested Tables, consultas SQL exigem
-  o operador TABLE() para desaninhar os registros e aliases obrigatórios, tornando
-  consultas complexas e relatórios de BI mais verbosos.
-
-  2. Manutenção de integridade referencial:
-  No modelo relacional 1:N, o banco aplica nativamente PRIMARY KEY, FOREIGN KEY,
-  ON DELETE CASCADE/RESTRICT e CHECK constraints diretamente sobre a tabela filha.
-  Em Nested Tables, a ligação com a tabela de armazenamento auxiliar (STORE AS)
-  é gerenciada internamente pelo Oracle, mas restrições relacionais tradicionais
-  (como referenciar elementos da coleção via FK a partir de outras tabelas) são
-  limitadas.
-
-  3. Suporte por ferramentas de integração / ORM:
-  Ferramentas de mercado (Hibernate, Entity Framework, JDBC padrão, ferramentas de
-  BI/ETL) possuem suporte maduro para tabelas relacionais normalizadas 1:N, mas
-  frequentemente enfrentam limitações, mapeamentos customizados complexos ou falta
-  de suporte nativo ao lidar com UDTs e coleções aninhadas do Oracle.
-
-  4. Performance em cargas massivas (ETL):
-  Cargas massivas em tabelas 1:N tradicionais se beneficiam de operações em lote
-  (bulk insert, direct-path load, particionamento e índices dedicados). Já em
-  Nested Tables, gravações e atualizações intensas geram overhead adicional de I/O
-  e manutenção na tabela auxiliar oculta, dificultando paralelismo e cargas ETL
-  de alto volume.
-*/
+-- Exercício 3: Nested Tables vs. Modelagem Relacional 1:N[cite: 39]
+-- - Flexibilidade SQL: Modelo 1:N permite joins, filtros e índices padrão; Nested Table exige TABLE() e aliases[cite: 34, 38, 39].
+-- - Integridade referencial: Modelo 1:N aplica PK/FK e ON DELETE nativamente; Nested Table usa tabela auxiliar oculta[cite: 34].
+-- - Ferramentas/ORM: ORMs (Hibernate, Entity Framework) têm suporte nativo a 1:N e limitações com UDTs Oracle[cite: 35].
+-- - Performance em ETL: Cargas massivas em 1:N são mais rápidas; Nested Tables geram overhead na tabela auxiliar[cite: 35].
