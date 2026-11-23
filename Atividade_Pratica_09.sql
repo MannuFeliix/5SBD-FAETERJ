@@ -2,52 +2,32 @@
 -- Matéria: 5SBD - Programação de Scripts de Banco de Dados
 -- Atividade: Atividade Prática 09: Sequences no Oracle Database
 -- Ferramenta: Oracle APEX | Turno: Manhã | 2026.2
--- Aluna(a): Manuelle
+-- Aluna: Manuelle
 -- ==========================================================
-
--- Objetivo: Compreender o funcionamento de Sequences (NEXTVAL, CURRVAL,
--- independência de transação, CACHE/NOCACHE, CYCLE/NOCYCLE), integrá-las a
--- tabelas (DEFAULT e mestre-detalhe), consultar USER_SEQUENCES e resolver os
--- exercícios práticos de fixação.
 
 
 -- ==========================================================
 -- ETAPA 1: Criação e Exploração Básica de Sequences
 -- ==========================================================
 
--- 1. Criação de uma Sequence com CACHE e controle de limites
 CREATE SEQUENCE seq_clientes_id
 START WITH 1000
 INCREMENT BY 1
 MINVALUE 1000
 MAXVALUE 999999
 CACHE 20
-NOCYCLE;
+NOCYCLE;[cite: 27, 28]
 
--- 2. Consumo e avanço de valores com NEXTVAL
-SELECT seq_clientes_id.NEXTVAL AS proximo_id FROM DUAL;
-
--- 3. Consulta ao valor corrente alocado na sessão com CURRVAL
-SELECT seq_clientes_id.CURRVAL AS id_atual FROM DUAL;
-
--- 4. Novo avanço para observar a progressão
-SELECT seq_clientes_id.NEXTVAL AS novo_id FROM DUAL;
+SELECT seq_clientes_id.NEXTVAL AS proximo_id FROM DUAL;[cite: 28]
+SELECT seq_clientes_id.CURRVAL AS id_atual FROM DUAL;[cite: 28]
+SELECT seq_clientes_id.NEXTVAL AS novo_id FROM DUAL;[cite: 28]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 1):
+  RESULTADO (ETAPA 1):
   Sequence SEQ_CLIENTES_ID created.
-
-  PROXIMO_ID
-  ----------
-  1000
-
-  ID_ATUAL
-  --------
-  1000
-
-  NOVO_ID
-  -------
-  1001
+  PROXIMO_ID: 1000
+  ID_ATUAL:   1000
+  NOVO_ID:    1001
 */
 
 
@@ -55,41 +35,36 @@ SELECT seq_clientes_id.NEXTVAL AS novo_id FROM DUAL;
 -- ETAPA 2: Integração de Sequences com Tabelas Relacionais
 -- ==========================================================
 
--- 1. Criação da tabela de clientes usando DEFAULT Sequence
 CREATE TABLE tb_clientes_apex (
-    id_cliente NUMBER DEFAULT seq_clientes_id.NEXTVAL PRIMARY KEY,
-    nome_razao VARCHAR2(100) NOT NULL,
-    cpf_cnpj VARCHAR2(18) NOT NULL,
-    cidade VARCHAR2(50) NOT NULL,
+    id_cliente    NUMBER DEFAULT seq_clientes_id.NEXTVAL PRIMARY KEY,
+    nome_razao    VARCHAR2(100) NOT NULL,
+    cpf_cnpj      VARCHAR2(18) NOT NULL,
+    cidade        VARCHAR2(50) NOT NULL,
     data_cadastro DATE DEFAULT SYSDATE NOT NULL
-);
-
--- 2. Inserção sem especificar a coluna de Chave Primária
-INSERT INTO tb_clientes_apex (nome_razao, cpf_cnpj, cidade)
-VALUES ('Alpha Consultoria e Tecnologia', '12.345.678/0001-90', 'Rio de Janeiro');
+);[cite: 28]
 
 INSERT INTO tb_clientes_apex (nome_razao, cpf_cnpj, cidade)
-VALUES ('Beta Soluções Logísticas', '98.765.432/0001-11', 'Niterói');
+VALUES ('Alpha Consultoria e Tecnologia', '12.345.678/0001-90', 'Rio de Janeiro');[cite: 28]
 
-COMMIT;
+INSERT INTO tb_clientes_apex (nome_razao, cpf_cnpj, cidade)
+VALUES ('Beta Soluções Logísticas', '98.765.432/0001-11', 'Niterói');[cite: 28]
 
--- 3. Verificação dos IDs atribuídos pela Sequence
+COMMIT;[cite: 28]
+
 SELECT id_cliente, nome_razao, cidade, data_cadastro
 FROM tb_clientes_apex
-ORDER BY id_cliente;
+ORDER BY id_cliente;[cite: 28]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 2):
+  RESULTADO (ETAPA 2):
   Table TB_CLIENTES_APEX created.
-  1 row inserted.
-  1 row inserted.
+  2 rows inserted.
   Commit complete.
 
   ID_CLIENTE  NOME_RAZAO                        CIDADE          DATA_CADASTRO
   ---------------------------------------------------------------------------
   1002        Alpha Consultoria e Tecnologia    Rio de Janeiro  23/11/2026
   1003        Beta Soluções Logísticas          Niterói         23/11/2026
-  (Nota: 1000 e 1001 já haviam sido consumidos pelos SELECT NEXTVAL na Etapa 1)
 */
 
 
@@ -97,26 +72,22 @@ ORDER BY id_cliente;
 -- ETAPA 3: Demonstração Prática de Gaps (Lacunas) por Rollback
 -- ==========================================================
 
--- 1. Inserir uma transação de teste
 INSERT INTO tb_clientes_apex (nome_razao, cpf_cnpj, cidade)
-VALUES ('Gama Engenharia e Projetos', '45.123.789/0001-55', 'São Paulo');
+VALUES ('Gama Engenharia e Projetos', '45.123.789/0001-55', 'São Paulo');[cite: 29]
 
--- 2. Cancelar a transação
-ROLLBACK;
+ROLLBACK;[cite: 29]
 
--- 3. Inserir um novo registro e comitar
 INSERT INTO tb_clientes_apex (nome_razao, cpf_cnpj, cidade)
-VALUES ('Delta Distribuidora de Peças', '33.222.111/0001-44', 'Curitiba');
+VALUES ('Delta Distribuidora de Peças', '33.222.111/0001-44', 'Curitiba');[cite: 29]
 
-COMMIT;
+COMMIT;[cite: 29]
 
--- 4. Consultar e constatar a lacuna intencional no id_cliente
 SELECT id_cliente, nome_razao
 FROM tb_clientes_apex
-ORDER BY id_cliente;
+ORDER BY id_cliente;[cite: 29]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 3):
+  RESULTADO (ETAPA 3):
   1 row inserted.
   Rollback complete.
   1 row inserted.
@@ -127,10 +98,7 @@ ORDER BY id_cliente;
   1002        Alpha Consultoria e Tecnologia
   1003        Beta Soluções Logísticas
   1005        Delta Distribuidora de Peças
-
-  Análise: O valor 1004 foi alocado para a transação revertida com ROLLBACK e
-  não é reutilizado, preservando a independência da sequence em relação às
-  transações concorrentes.
+  (O valor 1004 foi consumido no INSERT desfeito por ROLLBACK e não é reutilizado)[cite: 26, 29]
 */
 
 
@@ -138,43 +106,38 @@ ORDER BY id_cliente;
 -- ETAPA 4: Relacionamento Mestre-Detalhe Usando CURRVAL
 -- ==========================================================
 
--- 1. Tabela de Pedidos vinculada ao cliente
 CREATE TABLE tb_pedidos_apex (
-    id_pedido NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    id_cliente NUMBER NOT NULL,
+    id_pedido   NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    id_cliente  NUMBER NOT NULL,
     data_pedido DATE DEFAULT SYSDATE,
     valor_total NUMBER(10,2) NOT NULL,
     CONSTRAINT fk_ped_cli FOREIGN KEY (id_cliente) REFERENCES tb_clientes_apex(id_cliente)
-);
+);[cite: 29, 30]
 
--- 2. Bloco PL/SQL inserindo Cliente e Pedidos
 DECLARE
     v_id_cliente NUMBER;
 BEGIN
-    -- Inserir novo cliente (avança a Sequence com NEXTVAL)
     INSERT INTO tb_clientes_apex (id_cliente, nome_razao, cpf_cnpj, cidade)
     VALUES (seq_clientes_id.NEXTVAL, 'Mega Atacado do Brasil', '77.888.999/0001-22', 'Belo Horizonte')
-    RETURNING id_cliente INTO v_id_cliente;
-
-    -- Inserir pedidos usando CURRVAL e a variável capturada
-    INSERT INTO tb_pedidos_apex (id_cliente, valor_total)
-    VALUES (seq_clientes_id.CURRVAL, 4500.00);
+    RETURNING id_cliente INTO v_id_cliente;[cite: 30]
 
     INSERT INTO tb_pedidos_apex (id_cliente, valor_total)
-    VALUES (v_id_cliente, 12500.00);
+    VALUES (seq_clientes_id.CURRVAL, 4500.00);[cite: 30]
 
-    COMMIT;
+    INSERT INTO tb_pedidos_apex (id_cliente, valor_total)
+    VALUES (v_id_cliente, 12500.00);[cite: 30]
+
+    COMMIT;[cite: 30]
 END;
 /
 
--- 3. Validação do relacionamento Mestre-Detalhe
 SELECT c.id_cliente, c.nome_razao, p.id_pedido, p.valor_total
 FROM tb_clientes_apex c
 JOIN tb_pedidos_apex p ON c.id_cliente = p.id_cliente
-WHERE c.nome_razao = 'Mega Atacado do Brasil';
+WHERE c.nome_razao = 'Mega Atacado do Brasil';[cite: 30]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 4):
+  RESULTADO (ETAPA 4):
   Table TB_PEDIDOS_APEX created.
   PL/SQL procedure successfully completed.
 
@@ -189,18 +152,16 @@ WHERE c.nome_razao = 'Mega Atacado do Brasil';
 -- ETAPA 5: Alteração de Sequences e Consulta ao Dicionário de Dados
 -- ==========================================================
 
--- 1. Aumentar o CACHE para 50 e ajustar o MAXVALUE
 ALTER SEQUENCE seq_clientes_id
 CACHE 50
-MAXVALUE 2000000;
+MAXVALUE 2000000;[cite: 30, 31]
 
--- 2. Consultar os metadados da sequence no catálogo do Oracle
 SELECT sequence_name, min_value, max_value, increment_by, cycle_flag, cache_size, last_number
 FROM user_sequences
-WHERE sequence_name = 'SEQ_CLIENTES_ID';
+WHERE sequence_name = 'SEQ_CLIENTES_ID';[cite: 31]
 
 /*
-  SIMULAÇÃO DE RESULTADO (ETAPA 5):
+  RESULTADO (ETAPA 5):
   Sequence SEQ_CLIENTES_ID altered.
 
   SEQUENCE_NAME    MIN_VALUE  MAX_VALUE  INCREMENT_BY  CYCLE_FLAG  CACHE_SIZE  LAST_NUMBER
@@ -213,16 +174,15 @@ WHERE sequence_name = 'SEQ_CLIENTES_ID';
 -- SEÇÃO 3: Exercícios Práticos de Fixação
 -- ==========================================================
 
--- Exercício 1: Sequence com Reinício (CYCLE)
+-- Exercício 1: Sequence com Reinício (CYCLE)[cite: 31]
 CREATE SEQUENCE seq_ticket_diario
 START WITH 1
 INCREMENT BY 1
 MINVALUE 1
 MAXVALUE 5
 CYCLE
-CACHE 2;
+CACHE 2;[cite: 31]
 
--- Chamadas sucessivas a NEXTVAL (1, 2, 3, 4, 5 e reinício em 1)
 SELECT seq_ticket_diario.NEXTVAL AS t1 FROM DUAL;
 SELECT seq_ticket_diario.NEXTVAL AS t2 FROM DUAL;
 SELECT seq_ticket_diario.NEXTVAL AS t3 FROM DUAL;
@@ -231,44 +191,26 @@ SELECT seq_ticket_diario.NEXTVAL AS t5 FROM DUAL;
 SELECT seq_ticket_diario.NEXTVAL AS t6_reinicio FROM DUAL;
 
 /*
-  SIMULAÇÃO DE RESULTADO / COMPORTAMENTO (EXERCÍCIO 1):
+  RESULTADO (EXERCÍCIO 1):
   Sequence SEQ_TICKET_DIARIO created.
-  Sequência de retornos: 1 -> 2 -> 3 -> 4 -> 5 -> 1 (reinicia automaticamente
-  ao atingir MAXVALUE = 5 por conta do parâmetro CYCLE; se fosse NOCYCLE,
-  geraria erro ORA-08004 ao ultrapassar 5).
+  Sequência: 1 -> 2 -> 3 -> 4 -> 5 -> 1 (reinicia ao atingir MAXVALUE 5 por causa de CYCLE)[cite: 27, 31].
 */
 
 
--- Exercício 2: Migração Trigger vs DEFAULT
--- Abordagem clássica (pré-12c) via Trigger BEFORE INSERT:
+-- Exercício 2: Migração Trigger vs DEFAULT[cite: 31]
 CREATE OR REPLACE TRIGGER trg_clientes_apex_bi
 BEFORE INSERT ON tb_clientes_apex
 FOR EACH ROW
 WHEN (NEW.id_cliente IS NULL)
 BEGIN
-    :NEW.id_cliente := seq_clientes_id.NEXTVAL;
+    :NEW.id_cliente := seq_clientes_id.NEXTVAL;[cite: 27, 31]
 END;
 /
 
--- Abordagem moderna (12c+): definida diretamente na criação da coluna com DEFAULT seq.NEXTVAL:
--- id_cliente NUMBER DEFAULT seq_clientes_id.NEXTVAL PRIMARY KEY
-
-/*
-  COMPARAÇÃO E ANÁLISE (EXERCÍCIO 2):
-  A definição via DEFAULT seq.NEXTVAL na coluna é mais limpa, declarativa e de
-  manutenção mais simples do que manter um objeto Trigger separado, além de evitar
-  o overhead de disparo de gatilho PL/SQL por linha durante inserções.
-*/
+-- Abordagem 12c+ na coluna: id_cliente NUMBER DEFAULT seq_clientes_id.NEXTVAL PRIMARY KEY[cite: 27, 28, 31]
+-- DEFAULT seq.NEXTVAL é mais direto e evita disparo de trigger por linha[cite: 27, 31].
 
 
--- Exercício 3: Análise de Concorrência e CACHE
-/*
-  RESPOSTA TÉCNICA (EXERCÍCIO 3):
-  Em um ambiente OLTP de alta concorrência, utilizar NOCACHE faz com que cada
-  solicitação de novo número exija atualização física no dicionário de dados
-  em disco e serialização/contenção na área de memória compartilhada (SGA), como
-  esperas do tipo row cache lock. Isso aumenta a latência das inserções e reduz
-  a escalabilidade concorrente, enquanto o CACHE mantém um lote de valores em
-  memória para alocação rápida (assumindo eventuais lacunas em caso de falha ou
-  ROLLBACK).
-*/
+-- Exercício 3: Análise de Concorrência e CACHE[cite: 31]
+-- NOCACHE em alta concorrência gera contenção na SGA (row cache lock) e mais I/O
+-- no dicionário de dados a cada solicitação de valor[cite: 27, 31].
